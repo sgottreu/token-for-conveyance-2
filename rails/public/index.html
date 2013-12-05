@@ -1,0 +1,125 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="/js/socket.io.min.js"></script>
+<script>
+  var socket = io.connect('http://localhost:4000');
+  var trainCarDeck = new Array();
+
+function S4() {
+   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+}
+function guid() {
+   return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+</script>
+</head>
+<body>
+
+<div id="available_games">Available Games:<br/></div>
+
+<div id="current_game">Current Game:<br/></div>
+
+
+<button id='create_game'>Create Game</button>
+
+
+<div id="current_players">Current Players:<br/></div>
+
+<input type="text" id="player_name">
+<button id='enter_name'>Submit</button>
+
+<div id="train_cars">
+
+</div>
+<br/>
+<input type="text" id="game_id">
+<script >
+(function($){
+
+	$("#enter_name").click(function() {
+
+		socket.emit('addPlayer', { game_id: $("#game_id").val(), player_name: $("#player_name").val() } );
+		$("#current_players").append("<li>"+$("#player_name").val() + " - ME</li>");
+	});
+
+	$("#create_game").click(function() {
+		var uuid = guid();
+		socket.emit('createGame', uuid);
+		$("#current_game").append(uuid);
+		$("#available_games").append(uuid);
+		$(this).hide();
+		$("#game_id").val(uuid);
+	});
+
+	$(".card").click(function() {
+		socket.emit('cardDrawn', this.id);
+		$("#"+this.id).hide();
+	});
+
+	socket.on('cardDrawn', function(data) {
+	   console.log(data);
+	   $("#"+data).hide();
+	});
+
+
+	socket.on('addPlayer', function(data) {
+	   console.log(data);
+	   $("#current_players").append("<li>"+data.player_name+"</li>");
+	});
+
+	socket.on('createGame', function(data) {
+	   $("#available_games").append("<li class='available_game' id='"+data+"'>"+data+"</li>");
+
+	   $("#"+data).click(function() {
+	   	socket.emit('joinGame', this.id);
+	   	$("#current_game").append(this.id);
+	   	$("#game_id").val(this.id);
+	   	$("#create_game").hide();
+
+	   });
+	});
+
+	socket.on('joinGame', function(data) {
+	   	if($("#game_id").val() != '')
+		{
+			console.log(data);
+	   
+			$("#game_id").val(data.game_id);
+			$("#create_game").hide();
+			// trainCarDeck = data.trainCards;
+			// setTrainCards();
+		}
+	});
+
+	socket.on('loadTrainCards', function(data) {
+		if($("#game_id").val() != '')
+		{
+
+
+		   console.log(data);
+		   
+		   trainCarDeck = data;
+		   setTrainCards();
+		   
+		}
+	});
+
+	function setTrainCards()
+	{
+		$("#train_cars").html('');
+		   for(x=0;x<5;x++){
+		   	$("#train_cars").append("<li>"+trainCarDeck[x]+"</li>");
+		   }
+	}
+
+})(jQuery);
+
+
+
+</script>
+
+
+</body>
+
+</html>
