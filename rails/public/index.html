@@ -37,6 +37,17 @@ function guid() {
 <script >
 (function($){
 
+	socket.emit('clientOnline', '');
+
+	socket.on('clientOnline', function(data) {
+		for(x=0;x<data.length;x++){
+			$("#available_games").append("<li class='available_game' id='"+data[x].game_id+"'>"+data[x].game_id+"</li>");
+
+	   		joinGame(data[x].game_id);
+		}
+	   
+	});
+
 	$("#enter_name").click(function() {
 
 		socket.emit('addPlayer', { game_id: $("#game_id").val(), player_name: $("#player_name").val() } );
@@ -65,19 +76,13 @@ function guid() {
 
 	socket.on('addPlayer', function(data) {
 	   console.log(data);
-	   $("#current_players").append("<li>"+data.player_name+"</li>");
+	   $("#current_players").append("<li>"+data.name+"</li>");
 	});
 
 	socket.on('createGame', function(data) {
 	   $("#available_games").append("<li class='available_game' id='"+data+"'>"+data+"</li>");
 
-	   $("#"+data).click(function() {
-	   	socket.emit('joinGame', this.id);
-	   	$("#current_game").append(this.id);
-	   	$("#game_id").val(this.id);
-	   	$("#create_game").hide();
-
-	   });
+	   joinGame(data);
 	});
 
 	socket.on('joinGame', function(data) {
@@ -87,8 +92,11 @@ function guid() {
 	   
 			$("#game_id").val(data.game_id);
 			$("#create_game").hide();
-			// trainCarDeck = data.trainCards;
-			// setTrainCards();
+			
+			$("#current_players").html('');
+			for(x=0;x<data.players.length;x++){
+				$("#current_players").append("<li>"+data.players[x].name+"</li>");
+			}
 		}
 	});
 
@@ -104,6 +112,19 @@ function guid() {
 		   
 		}
 	});
+
+	function joinGame(game_id)
+	{
+	   
+
+	   $("#"+game_id).click(function() {
+	   	socket.emit('joinGame', this.id);
+	   	$("#current_game").append(this.id);
+	   	$("#game_id").val(this.id);
+	   	$("#create_game").hide();
+
+	   });
+	}
 
 	function setTrainCards()
 	{

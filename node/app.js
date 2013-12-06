@@ -67,6 +67,13 @@ totalofEachTrainCards[8] = {card:'Locomotive', count: 14};
 
 io.sockets.on('connection', function (socket) {
    
+  socket.on('clientOnline', function (data) {
+
+    games.find().toArray(function(err, games) {
+      socket.emit('clientOnline', games);
+    });
+
+  });
 
   socket.on('cardDrawn', function (data) {
     console.log(socket+" drawing card.");
@@ -133,7 +140,7 @@ io.sockets.on('connection', function (socket) {
 
       games.update({"game_id":game_id}, result, function(e, upResult){ });
 
-      socket.broadcast.emit('joinGame', game_id);
+      io.sockets.emit('joinGame', result);
       socket.emit('loadTrainCards', shuffledDeck);
     });
 
